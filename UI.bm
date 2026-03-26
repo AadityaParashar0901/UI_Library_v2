@@ -1,0 +1,427 @@
+'Include:'ui.bi'
+Function UI_Create~& (__Type%%, W!, H!, X!, Y!, Title$, Content$) Static
+    __I~& = UBound(UI_Elements) + 1
+    ReDim _Preserve UI_Elements(0 To __I~&) As UI_Element
+    UI_Elements(__I~&) = Default_UI_Element
+    UI_Elements(__I~&).Type = __Type%%
+    UI_Elements(__I~&).Parent = UI_Current_Parent
+    UI_Elements(__I~&).Visible = __Type%% < UI_Dialog And __Type%% <> UI_TabsPage
+    If W! = 0 Then
+        W! = _PrintWidth(Title$) + _PrintWidth("wi")
+        For J = 1 To ListStringLength(Content$)
+            tmpW = _PrintWidth(ListStringGet(Content$, J))
+            If W! < tmpW Then W! = tmpW
+        Next J
+        W! = W! + _PrintWidth("wi") / 2
+    End If
+    UI_Elements(__I~&).W = W!
+    If H! = 0 Then H! = H! + _FontHeight * (ListStringLength(Content$) + 1) + 4
+    UI_Elements(__I~&).H = H!
+    UI_Elements(__I~&).X = X!
+    UI_Elements(__I~&).Y = Y!
+    UI_Elements(__I~&).Title = Title$
+    UI_Elements(__I~&).Content = Content$
+    UI_Elements(__I~&).Font = _Font
+    UI_Create = __I~&
+End Function
+Sub UI_Set_Visible (__Visibility%%) Static
+    UI_Elements(UBound(UI_Elements)).Visible = __Visibility%%
+End Sub
+Sub UI_Set_Color (__FC&, __BC&) Static
+    UI_Elements(UBound(UI_Elements)).FColor = __FC&
+    UI_Elements(UBound(UI_Elements)).BColor = __BC&
+End Sub
+Sub UI_Set_HoverColor (__FC&, __BC&) Static
+    UI_Elements(UBound(UI_Elements)).HoverFColor = __FC&
+    UI_Elements(UBound(UI_Elements)).HoverBColor = __BC&
+End Sub
+Sub UI_Set_ClickColor (__FC&, __BC&) Static
+    UI_Elements(UBound(UI_Elements)).ClickFColor = __FC&
+    UI_Elements(UBound(UI_Elements)).ClickBColor = __BC&
+End Sub
+Sub UI_Set_Image (__IMG&) Static
+    UI_Elements(UBound(UI_Elements)).Image = __IMG&
+End Sub
+Sub UI_Set_Progress (__P!, __MP!) Static
+    UI_Elements(UBound(UI_Elements)).Progress = __P!
+    UI_Elements(UBound(UI_Elements)).MaxProgress = __MP!
+End Sub
+Sub UI_Set_Value (__V!, __MV!) Static
+    UI_Elements(UBound(UI_Elements)).Value = __V!
+    UI_Elements(UBound(UI_Elements)).MaxValue = __MV!
+End Sub
+Sub UI_Set_Border (__BorderSize~%, __BorderColor~&) Static
+    UI_Elements(UBound(UI_Elements)).BorderSize = __BorderSize~%
+    UI_Elements(UBound(UI_Elements)).BorderColor = __BorderColor~&
+End Sub
+Sub UI_Set_Children (__Children$) Static
+    UI_Elements(UBound(UI_Elements)).Children = __Children$
+End Sub
+Function UI_Get_Response& (__ID~&) Static
+    UI_Get_Response& = UI_Elements(__ID~&).Response
+End Function
+Function UI_Get_Hover%% (__ID~&) Static
+    UI_Get_Hover%% = UI_Elements(__ID~&).Hover
+End Function
+Function UI_Get_Click%% (__ID~&) Static
+    UI_Get_Click%% = UI_Elements(__ID~&).Clicked
+End Function
+Sub UI_Draw Static
+    Dim As _Unsigned Long I
+    Dim As _Unsigned Integer FH
+    Dim UIE As UI_Element
+    DefaultFont& = _Font
+    FH = _FontHeight - 1
+    For I = 1 To UBound(UI_Elements)
+        UI_Elements(I).Response = 0
+        UIE = UI_Elements(I)
+        If UIE.Visible = 0 Then _Continue
+        If UIE.Parent Then
+            If UI_Elements(UIE.Parent).Visible = 0 Then _Continue
+            ParentWidth = UI_Elements(UIE.Parent).__W
+            ParentHeight = UI_Elements(UIE.Parent).__H
+            ParentX = UI_Elements(UIE.Parent).__X
+            ParentY = UI_Elements(UIE.Parent).__Y
+        Else
+            ParentWidth = _Width
+            ParentHeight = _Height
+            ParentX = 0
+            ParentY = 0
+        End If
+        If UIE.W > -1 And UIE.W < 0 Then
+            UIE.__W = ParentWidth * (1 + UIE.W)
+        ElseIf UIE.W <= -1 Then UIE.__W = ParentWidth + UIE.W
+        ElseIf UIE.W > 0 And UIE.W < 1 Then UIE.__W = ParentWidth * UIE.W
+        Else UIE.__W = UIE.W
+        End If
+        If UIE.H > -1 And UIE.H < 0 Then
+            UIE.__H = ParentHeight * (1 + UIE.H)
+        ElseIf UIE.H <= -1 Then UIE.__H = ParentHeight + UIE.H
+        ElseIf UIE.H > 0 And UIE.H < 1 Then UIE.__H = ParentHeight * UIE.H
+        Else UIE.__H = UIE.H
+        End If
+        If UIE.X > -1 And UIE.X < 0 Then
+            UIE.__X = ParentWidth * (1 + UIE.X)
+        ElseIf UIE.X <= -1 Then UIE.__X = ParentWidth + UIE.X
+        ElseIf UIE.X > 0 And UIE.X < 1 Then UIE.__X = ParentWidth * UIE.X
+        Else UIE.__X = UIE.X
+        End If: UIE.__X = UIE.__X + ParentX
+        If UIE.Y > -1 And UIE.Y < 0 Then
+            UIE.__Y = ParentHeight * (1 + UIE.Y)
+        ElseIf UIE.Y <= -1 Then UIE.__Y = ParentHeight + UIE.Y
+        ElseIf UIE.Y > 0 And UIE.Y < 1 Then UIE.__Y = ParentHeight * UIE.Y
+        Else UIE.__Y = UIE.Y
+        End If: UIE.__Y = UIE.__Y + ParentY
+
+        Dim As Integer CX, CY, X2, Y2, TX, TY, TX2, MX2, MY2
+        Dim As Long FC, BC
+        CX = UIE.__X + UIE.__W / 2
+        CY = UIE.__Y + UIE.__H / 2
+        X2 = UIE.__X + UIE.__W
+        Y2 = UIE.__Y + UIE.__H
+
+        If UIE.Font Then _Font UIE.Font
+        UIE.Clicked = 0: UIE.Hover = 0
+        If MouseInArea(UIE.__X, UIE.__Y, X2, Y2) Then
+            If _MouseButton(1) Then UIE.Clicked = -1
+            UIE.Hover = -1
+            If InStr(Chr$(1 And UI_Current_Focus = UIE.Parent) + Chr$(9), Chr$(UIE.Type)) Then
+                If _MouseButton(1) Then
+                    FC = UIE.ClickFColor: BC = UIE.ClickBColor
+                Else
+                    FC = UIE.HoverFColor: BC = UIE.HoverBColor
+                End If
+            Else FC = UIE.FColor: BC = UIE.BColor
+            End If
+        Else FC = UIE.FColor: BC = UIE.BColor
+        End If
+
+        Select EveryCase UIE.Type ' Calculate Spinner, RadioGroup, Menu Dialog Size
+            Case UI_Spinner, UI_RadioGroup, UI_Menu: MX2 = 0: MY2 = ListStringLength(UIE.Content)
+                For J = 1 To MY2
+                    TX2 = _PrintWidth(ListStringGet(UIE.Content, J))
+                    If TX2 > MX2 Then MX2 = TX2
+                Next J
+                MX2 = MX2 + 8 + UIE.__X
+                If MX2 < X2 Then MX2 = X2
+                MY2 = MY2 * _FontHeight + Y2
+            Case UI_RadioGroup: MY2 = MY2 - Y2 + UIE.__Y + 16
+        End Select
+
+        Select Case UIE.Type ' Gray Area - Dialog Background
+            'Case UI_Menu: If UI_Current_Focus = I Then Line (0, 0)-(_Width - 1, _Height - 1), &H7F000000, BF
+            Case UI_Dialog To UI_Dialog_List: Line (0, 0)-(_Width - 1, _Height - 1), &H7F000000, BF
+        End Select
+
+        Select Case UIE.Type ' Pre-Border
+            Case UI_Button, UI_Spinner, UI_Menu: RoundedRectangle UIE.__X, UIE.__Y, X2 - 1, Y2 - 1, FC, UIE.BorderRadius
+            Case UI_List, UI_RadioGroup, UI_Dialog To UI_Dialog_List
+                dX = _FontWidth / 2: If dX = 0 Then dX = 4
+                dY = _FontHeight / 2
+                RoundedRectangle UIE.__X + dX, UIE.__Y + dY, X2 - dX - 1, Y2 - dY - 1, UIE.BorderColor, UIE.BorderRadius
+        End Select
+
+        If UIE.Image Then ' Image or Background Area
+            _PutImage (UIE.__X, UIE.__Y)-(X2, Y2), UIE.Image
+        Else Select Case UIE.Type
+                Case UI_Button To UI_Menu, UI_Dialog To UI_Dialog_List: RoundedRectangle UIE.__X, UIE.__Y, X2 - 1, Y2 - 1, BC, UIE.BorderRadius
+            End Select
+            If UI_Current_Focus = I Then
+                Select Case UIE.Type
+                    Case UI_Spinner, UI_Menu
+                        RoundedRectangle UIE.__X, Y2, MX2, MY2, UIE.BColor, UIE.BorderRadius
+                        RoundedRectangle UIE.__X, Y2, MX2, MY2, FC, UIE.BorderRadius
+                End Select
+            End If
+        End If
+
+        Select Case UIE.Type ' Text to Show
+            Case UI_Spinner: If UIE.Selected Then TEXT$ = ListStringGet(UIE.Content, UIE.Selected) Else TEXT$ = UIE.Title
+            Case UI_ToggleButton: TEXT$ = ListStringGet(UIE.Content, UIE.Selected + 1)
+            Case UI_TabsGroup: TEXT$ = ListStringGet(UIE.Content, UIE.Selected + 1)
+            Case Else: TEXT$ = UIE.Title
+        End Select
+
+        Select Case UIE.Type ' ProgressBar, Slider
+            Case UI_ProgressBar: If UIE.Orientation = UI_Orientation_Vertical Then
+                    Line (UIE.__X, UIE.__Y)-(X2, Y2 - UIE.__H * (UIE.Progress / UIE.MaxProgress)), &HFF0DF00, BF
+                Else
+                    Line (UIE.__X, UIE.__Y)-(UIE.__X + UIE.__W * (UIE.Progress / UIE.MaxProgress), Y2), &HFF00DF00, BF
+                    TEXT$ = TEXT$ + " " + _Trim$(Str$(Int((UIE.Progress / UIE.MaxProgress) * 100))) + "%"
+                    BC = 0
+                End If
+            Case UI_Slider: If UIE.Orientation = UI_Orientation_Vertical Then
+                    T% = UIE.__H * (1 - (UIE.Value / UIE.MaxValue))
+                    Line (CX, UIE.__Y)-(CX, Y2 - 1), UIE.ClickBColor, BF
+                    Line (CX, UIE.__Y + T% - 4)-(CX, Y2), UIE.ClickFColor, BF
+                    RoundedRectangleFilled UIE.__X, UIE.__Y + T% - 4, X2, UIE.__Y + T% + 3, FC, UIE.RoundedRadius
+                    If UIE.Value Then TEXT$ = ListStringGet(UIE.Content, UIE.Value)
+                Else
+                    T% = UIE.__W * (UIE.Value / UIE.MaxValue)
+                    Line (UIE.__X, CY - 1)-(X2 - 1, CY + 1), UIE.ClickBColor, BF
+                    Line (UIE.__X, CY - 1)-(UIE.__X + T% - 4, CY + 1), UIE.ClickFColor, BF
+                    RoundedRectangleFilled UIE.__X + T% - 4, UIE.__Y, UIE.__X + T% + 3, Y2, FC, UIE.RoundedRadius 'Line (UIE.__X + T% - 4, UIE.__Y)-(UIE.__X + T% + 3, Y2), FC, BF
+                    If UIE.Value Then TEXT$ = ListStringGet(UIE.Content, UIE.Value)
+                End If
+        End Select
+
+        TX = UIE.__X + (UIE.__W - _PrintWidth(TEXT$)) / 2: TY = UIE.__Y + (UIE.__H - _FontHeight) / 2
+        Color FC, BC: Select Case UIE.Type ' Text & Content
+            Case UI_Button, UI_Label, UI_ProgressBar, UI_Slider, UI_ToggleButton: _PrintString (TX, TY), TEXT$
+
+            Case UI_List: _PrintString (UIE.__X + 20, UIE.__Y + 1), UIE.Title
+                If UIE.ScrollOffset < 1 Then UIE.ScrollOffset = 1
+                If UIE.ScrollOffset > ListStringLength(UIE.Content) Then UIE.ScrollOffset = ListStringLength(UIE.Content)
+                SJ = UIE.ScrollOffset: If SJ < 1 Then SJ = 1
+                EJ = UIE.ScrollOffset + (UIE.__H - 16) \ _FontHeight - 2: If EJ > ListStringLength(UIE.Content) Then EJ = ListStringLength(UIE.Content)
+                TX = UIE.__X + 12: TY = UIE.__Y + _FontHeight + 4: TX2 = UIE.__X + UIE.__W - 13
+                Color FC, 0: For J = SJ To EJ
+                    __MouseInArea` = UI_Current_Focus = UIE.Parent And MouseInArea(TX, TY, TX2, TY + _FontHeight - 1)
+                    If __MouseInArea` Or UIE.Selected = J Then
+                        If __MouseInArea` And _MouseButton(1) Then BC = UIE.ClickBColor Else BC = UIE.HoverBColor
+                        RoundedRectangleFilled TX, TY, TX2, TY + _FontHeight - 1, BC, UIE.RoundedRadius
+                    End If
+                    If UIE.Selected = J Then TEXT$ = "> " + ListStringGet(UIE.Content, J) Else TEXT$ = "  " + ListStringGet(UIE.Content, J)
+                    _PrintString (TX, TY), TEXT$
+                    TY = TY + _FontHeight
+                    If J < EJ Then Line (TX, TY - 1)-(TX2, TY - 1), &H3F000000
+                Next J
+
+            Case UI_Text: _PrintString (UIE.__X + 16, UIE.__Y + 1), UIE.Title ' Incomplete
+                SJ = UIE.ScrollOffset: If SJ < 1 Then SJ = 1
+                EJ = UIE.ScrollOffset + UIE.__H \ _FontHeight: If EJ > ListStringLength(UIE.Content) Then EJ = ListStringLength(UIE.Content)
+                For J = SJ To EJ
+                Next J
+
+            Case UI_Spinner, UI_Menu: _PrintString (TX, TY), TEXT$
+                If UI_Current_Focus = I Then
+                    TX = UIE.__X + 4: TY = Y2: TX2 = MX2 - 4
+                    EJ = ListStringLength(UIE.Content)
+                    Color FC, 0: For J = 1 To EJ
+                        If MouseInArea(TX, TY, TX2, TY + _FontHeight - 1) Then
+                            If _MouseButton(1) Then BC = UIE.ClickBColor Else BC = UIE.HoverBColor
+                            RoundedRectangleFilled TX, TY, TX2, TY + _FontHeight - 1, BC, UIE.RoundedRadius
+                        End If
+                        _PrintString (TX, TY), ListStringGet(UIE.Content, J)
+                        TY = TY + _FontHeight
+                        If J < EJ Then Line (TX, TY - 1)-(TX2, TY - 1), &H3F000000
+                    Next J
+                End If
+
+            Case UI_RadioGroup: _PrintString (UIE.__X + 20, UIE.__Y + 1), TEXT$
+                TX = UIE.__X + 4: TY = UIE.__Y + 16: TX2 = MX2 - 4
+                EJ = ListStringLength(UIE.Content)
+                Color FC, 0: For J = 1 To EJ
+                    __MouseInArea` = UI_Current_Focus = UIE.Parent And MouseInArea(TX, TY, TX2, TY + _FontHeight - 1)
+                    If __MouseInArea` Or UIE.Selected = J Then
+                        If __MouseInArea` And _MouseButton(1) Then BC = UIE.ClickBColor Else BC = UIE.HoverBColor
+                        RoundedRectangleFilled TX, TY, TX2, TY + _FontHeight - 1, BC, UIE.RoundedRadius
+                    End If
+                    _PrintString (TX, TY), ListStringGet(UIE.Content, J)
+                    TY = TY + _FontHeight
+                    If J < EJ Then Line (TX, TY - 1)-(TX2, TY - 1), &H3F000000
+                Next J
+
+            Case UI_CheckBox: _PrintString (X2 - _PrintWidth(TEXT$), TY), TEXT$
+                RoundedRectangle UIE.__X + 2, TY, UIE.__X + 2 + FH, TY + FH, FC, UIE.RoundedRadius
+                If UIE.Checked Then RoundedRectangleFilled UIE.__X + 4, TY + 2, UIE.__X + FH, TY + FH - 2, FC, UIE.RoundedRadius
+
+            Case UI_TabsGroup: _PrintString (TX, TY), TEXT$
+                T$ = ListStringGet(UIE.Content, 1 + ClampCycle(0, UIE.Selected - 1, ListStringLength(UIE.Content) - 1))
+                __X1% = TX - _PrintWidth(T$ + "|"): __X2% = TX + _PrintWidth(TEXT$ + "|")
+                Color FC And &H7FFFFFFF: _PrintString (__X1%, TY), T$
+                T$ = ListStringGet(UIE.Content, 1 + ClampCycle(0, UIE.Selected + 1, ListStringLength(UIE.Content) - 1))
+                __X3% = __X2% + _PrintWidth(T$)
+                __X4% = TX - _PrintWidth("|")
+                _PrintString (__X2%, TY), T$: Color FC
+
+            Case UI_Dialog To UI_Dialog_List: _PrintString (UIE.__X + 16, UIE.__Y + 1), UIE.Title
+        End Select
+
+        Select Case UIE.Type ' Border (for all)
+            Case Else: If UIE.BorderSize Then
+                    For J = 1 To UIE.BorderSize: RoundedRectangle UIE.__X - J, UIE.__Y - J, X2 + J, Y2 + J, UIE.BorderColor, UIE.BorderRadius: Next J
+                End If
+        End Select
+
+        If MouseInArea(UIE.__X, UIE.__Y, X2 - 1, Y2 - 1) Then ' Event Listening
+            Select Case UIE.Type
+                Case UI_Button: If UI_Current_Focus = UIE.Parent Then
+                        For J = 1 To 3
+                            If _MouseButton(J) = 0 Then _Continue
+                            UIE.Response = J
+                        Next J
+                    End If
+
+                Case UI_Slider: If UI_Current_Focus = UIE.Parent And _MouseButton(1) Then
+                        If UIE.Orientation = UI_Orientation_Vertical Then
+                            UIE.Value = UIE.MaxValue * (1 - (_MouseY - UIE.__Y) / UIE.__H)
+                        Else
+                            UIE.Value = UIE.MaxValue * (_MouseX - UIE.__X) / UIE.__W
+                        End If
+                        UIE.Response = UIE.Value
+                    End If
+
+                Case UI_List: If UI_Current_Focus = UIE.Parent Then
+                        If _MouseButton(1) Then
+                            UIE.Response = UIE.ScrollOffset + (_MouseY - UIE.__Y - 4) \ _FontHeight - 1
+                            UIE.Selected = UIE.Response
+                            If UIE.Response <= ListStringLength(UIE.Content) Then UIE.ResponseString = ListStringGet(UIE.Content, UIE.Response)
+                        End If
+                        UIE.ScrollOffset = UIE.ScrollOffset + UI_MouseWheel
+                    End If
+
+                Case UI_Text: If UI_Current_Focus = I Then
+                        Select Case _KeyHit
+                            Case 27
+                        End Select
+                    Else
+                        Line (UIE.__X, UIE.__Y)-(UIE.__X, UIE.__Y + _FontHeight - 1), &H3F000000
+                        If _MouseButton(1) And UI_Current_Focus = UIE.Parent Then UI_Current_Focus = I
+                    End If
+
+                Case UI_RadioGroup: If _MouseButton(1) And _MouseY < MY2 Then
+                        UIE.Response = (_MouseY - UIE.__Y) \ _FontHeight
+                        UIE.Selected = UIE.Response
+                        UIE.ResponseString = ListStringGet(UIE.Content, UIE.Response)
+                    End If
+                Case UI_CheckBox: If _MouseButton(1) Then
+                        UIE.Checked = Not UIE.Checked
+                        WaitForMouseButtonRelease 1
+                    End If
+
+                Case UI_Spinner, UI_Menu: If UI_Current_Focus <> I Then
+                        If _MouseButton(1) And UI_Current_Focus = UIE.Parent Then UI_Current_Focus = I
+                    End If
+
+                Case UI_ToggleButton: If _MouseButton(1) Then
+                        UIE.Selected = (UIE.Selected + 1) Mod ListStringLength(UIE.Content)
+                        UIE.Response = UIE.Selected + 1
+                        WaitForMouseButtonRelease 1
+                    End If
+
+                Case UI_TabsGroup: If _MouseButton(1) Then
+                        If __X2% <= _MouseX And _MouseX < __X3% Then
+                            UIE.Selected = ClampCycle(0, UIE.Selected + 1, ListStringLength(UIE.Content) - 1)
+                        End If
+                        If __X1% <= _MouseX And _MouseX < __X4% Then
+                            UIE.Selected = ClampCycle(0, UIE.Selected - 1, ListStringLength(UIE.Content) - 1)
+                        End If
+                        For J = 1 To ListStringLength(UIE.Children)
+                            UI_Elements(Val(ListStringGet(UIE.Children, J))).Visible = UIE.Selected + 1 = J
+                        Next J
+                        WaitForMouseButtonRelease 1
+                    End If
+
+                Case UI_TabsPage: UI_Current_Focus = I
+
+                Case UI_Dialog
+                Case UI_Dialog_Message
+                Case UI_Dialog_Text
+                Case UI_Dialog_Image
+                Case UI_Dialog_List
+            End Select
+        Else
+            Select Case UIE.Type
+                Case UI_Spinner, UI_Menu: If UI_Current_Focus = I Then
+                        If _MouseButton(1) Then
+                            If MouseInArea(UIE.__X, Y2, MX2, MY2) Then
+                                UIE.Response = (_MouseY - Y2) \ _FontHeight + 1
+                                UIE.Selected = UIE.Response
+                                UIE.ResponseString = ListStringGet(UIE.Content, UIE.Response)
+                                WaitForMouseButtonRelease 1
+                            End If
+                            UI_Current_Focus = UIE.Parent
+                        End If
+                    End If
+
+                Case UI_TabsPage: UI_Current_Focus = UIE.Parent
+
+                Case UI_Dialog To UI_Dialog_List: If _MouseButton(1) Then
+                        UI_Current_Focus = 0
+                        UIE.Visible = 0
+                    End If
+            End Select
+        End If
+
+    UI_Elements(I) = UIE: Next I
+    _Font DefaultFont&
+End Sub
+Function MouseInArea` (X1%, Y1%, X2%, Y2%): MouseInArea` = X1% <= _MouseX And _MouseX < X2% And Y1% <= _MouseY And _MouseY < Y2%: End Function
+Sub WaitForMouseButtonRelease (J%%): While _MouseInput Or _MouseButton(J%%): Wend: End Sub
+Sub RoundedRectangle (X1 As Integer, Y1 As Integer, X2 As Integer, Y2 As Integer, C As Long, R As Single) Static
+    Static As Integer XR1, XR2, YR1, YR2
+    If R = 0 Then
+        Line (X1, Y1)-(X2, Y2), C, B
+        Exit Sub
+    End If
+    XR1 = X1 + R: YR1 = Y1 + R
+    XR2 = X2 - R: YR2 = Y2 - R
+    Line (X1, YR1 + 1)-(X1, YR2 - 1), C&
+    Line (XR1 + 1, Y1)-(XR2 - 1, Y1), C&
+    Line (X2, YR1 + 1)-(X2, YR2 - 1), C&
+    Line (XR1 + 1, Y2)-(XR2 - 1, Y2), C&
+    Circle (XR1, YR1), R!, C&, _D2R(90), _D2R(180)
+    Circle (XR2, YR1), R!, C&, _D2R(0), _D2R(90)
+    Circle (XR1, YR2), R!, C&, _D2R(180), _D2R(270)
+    Circle (XR2, YR2), R!, C&, _D2R(270), _D2R(0)
+End Sub
+Sub RoundedRectangleFilled (X1 As Integer, Y1 As Integer, X2 As Integer, Y2 As Integer, C As Long, R As Single) Static
+    Static As Integer X, Y, XR1, XR2, YR1, YR2
+    If R = 0 Then
+        Line (X1, Y1)-(X2, Y2), C, BF
+        Exit Sub
+    End If
+    XR1 = X1 + R: YR1 = Y1 + R
+    XR2 = X2 - R: YR2 = Y2 - R
+    Line (XR1, Y1)-(XR2, Y2), C, BF
+    Y = R: For X = 0 To R
+        While _Hypot(X, Y) > R: Y = Y - 1: Wend
+        Line (XR2 + X, YR1 - Y)-(XR2 + X, YR2 + Y), C
+        Line (XR1 - X, YR1 - Y)-(XR1 - X, YR2 + Y), C
+    Next X
+End Sub
+'$Include:'include\clamp.bm'
+$Checking:Off
+'$Include:'include\dsa\liststring.bas'
+$Checking:On
