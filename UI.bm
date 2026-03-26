@@ -285,14 +285,12 @@ Sub UI_Draw Static
 
         If MouseInArea(UIE.__X, UIE.__Y, X2 - 1, Y2 - 1) Then ' Event Listening
             Select Case UIE.Type
-                Case UI_Button: If UI_Current_Focus = UIE.Parent Then
-                        For J = 1 To 3
-                            If _MouseButton(J) = 0 Then _Continue
-                            UIE.Response = J
-                        Next J
-                    End If
+                Case UI_Button: For J = 1 To 3
+                        If _MouseButton(J) = 0 Then _Continue
+                        UIE.Response = J
+                    Next J
 
-                Case UI_Slider: If UI_Current_Focus = UIE.Parent And _MouseButton(1) Then
+                Case UI_Slider: If _MouseButton(1) Then
                         If UIE.Orientation = UI_Orientation_Vertical Then
                             UIE.Value = UIE.MaxValue * (1 - (_MouseY - UIE.__Y) / UIE.__H)
                         Else
@@ -301,14 +299,12 @@ Sub UI_Draw Static
                         UIE.Response = UIE.Value
                     End If
 
-                Case UI_List: If UI_Current_Focus = UIE.Parent Then
-                        If _MouseButton(1) Then
-                            UIE.Response = UIE.ScrollOffset + (_MouseY - UIE.__Y - 4) \ _FontHeight - 1
-                            UIE.Selected = UIE.Response
-                            If UIE.Response <= ListStringLength(UIE.Content) Then UIE.ResponseString = ListStringGet(UIE.Content, UIE.Response)
-                        End If
-                        UIE.ScrollOffset = UIE.ScrollOffset + UI_MouseWheel
+                Case UI_List: If _MouseButton(1) Then
+                        UIE.Response = UIE.ScrollOffset + (_MouseY - UIE.__Y - 4) \ _FontHeight - 1
+                        UIE.Selected = UIE.Response
+                        If UIE.Response <= ListStringLength(UIE.Content) Then UIE.ResponseString = ListStringGet(UIE.Content, UIE.Response)
                     End If
+                    UIE.ScrollOffset = UIE.ScrollOffset + UI_MouseWheel
 
                 Case UI_Text: If UI_Current_Focus = I Then
                         Select Case _KeyHit
