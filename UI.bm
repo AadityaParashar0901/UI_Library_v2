@@ -216,12 +216,11 @@ Sub UI_Draw Static
                 TX = UIE.__X + 12: TY = UIE.__Y + _FontHeight + 4: TX2 = UIE.__X + UIE.__W - 13
                 Color FC, 0: For J = SJ To EJ
                     __MouseInArea` = UI_Current_Focus = UIE.Parent And MouseInArea(TX, TY, TX2, TY + _FontHeight - 1)
-                    If __MouseInArea` Or UIE.Selected = J Then
+                    If __MouseInArea` Or UIE.Selected = J Or UIE.Highlighted = J Then
                         If __MouseInArea` And _MouseButton(1) Then BC = UIE.ClickBColor Else BC = UIE.HoverBColor
                         RoundedRectangleFilled TX, TY, TX2, TY + _FontHeight - 1, BC, UIE.RoundedRadius
                     End If
-                    If UIE.Selected = J Then TEXT$ = "> " + ListStringGet(UIE.Content, J) Else TEXT$ = "  " + ListStringGet(UIE.Content, J)
-                    _PrintString (TX, TY), TEXT$
+                    _PrintString (TX, TY), _IIf(UIE.Selected = J, "> ", "  ") + ListStringGet(UIE.Content, J)
                     TY = TY + _FontHeight
                     If J < EJ Then Line (TX, TY - 1)-(TX2, TY - 1), &H3F000000
                 Next J

@@ -24,7 +24,7 @@ Type UI_Element
 
     As Single Value, MaxValue ' Slider, ToggleButton
 
-    As Long ScrollOffset, Selected ' List Box
+    As Long ScrollOffset, Highlighted, Selected ' List Box
 
     ' Text Box
     As Long CursorPositionX, CursorPositionY
